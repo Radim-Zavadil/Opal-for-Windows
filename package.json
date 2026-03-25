@@ -1,0 +1,15 @@
+{
+  "name": "focus-mode",
+  "version": "1.0.0",
+  "description": "Block distracting websites and apps during focus sessions",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^30.0.0"
+  }
+}

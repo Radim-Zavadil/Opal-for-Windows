@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interrupt Overlay</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background-color: rgba(18, 18, 18, 0.95); /* slightly transparent dark */
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      text-align: center;
+      backdrop-filter: blur(10px);
+    }
+    .icon {
+      font-size: 80px;
+      margin-bottom: 20px;
+    }
+    h1 {
+      font-size: 48px;
+      margin-bottom: 10px;
+      background: linear-gradient(90deg, #ffd0d0 0%, #f0a8a8 100%); /* Reddish gradient for interrupt */
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    p.quote {
+      font-size: 20px;
+      color: #a0a0a0;
+      max-width: 600px;
+      margin-bottom: 40px;
+      line-height: 1.5;
+    }
+    .btn {
+      background: linear-gradient(90deg, #d3ffd0 0%, #a8f0ef 100%);
+      color: #121212;
+      border: none;
+      padding: 15px 40px;
+      border-radius: 30px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(168, 240, 239, 0.3);
+      transition: opacity 0.2s;
+    }
+    .btn:hover {
+      opacity: 0.9;
+    }
+    
+    /* Electron specific drag area if needed */
+    .drag-area {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 30px;
+      -webkit-app-region: drag;
+    }
+  </style>
+</head>
+<body>
+  <div class="drag-area"></div>
+  <div class="icon">🛑</div>
+  <h1 id="app-name">Focus Interrupted</h1>
+  <p class="quote">Get back to work. You're trying to open a blocked application.</p>
+  <button class="btn" id="close-btn">Work It!</button>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+    
+    document.getElementById('close-btn').addEventListener('click', () => {
+      ipcRenderer.send('close-interrupt');
+    });
+
+    ipcRenderer.on('set-blocked-app', (event, appName) => {
+      document.getElementById('app-name').innerText = `${appName} is blocked!`;
+    });
+  </script>
+</body>
+</html>

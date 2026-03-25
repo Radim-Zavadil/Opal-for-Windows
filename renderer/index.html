@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Focus Mode</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="drag-bar"></div>
+
+  <div class="sidebar">
+    <button class="new-block-btn" id="btn-new-block">+ New Block</button>
+    <nav>
+      <a href="#" class="nav-item active" data-target="view-blocks"><span class="icon">🧱</span> Blocks</a>
+      <a href="#" class="nav-item" data-target="view-settings"><span class="icon">⚙️</span> Settings</a>
+      <a href="#" class="nav-item" data-target="view-feedback"><span class="icon">💬</span> Give Feedback</a>
+    </nav>
+    <div class="user-profile">
+      <span class="avatar">👤</span> DemetriPanici
+    </div>
+  </div>
+
+  <main class="content">
+    
+    <!-- Blocks View -->
+    <div id="view-blocks" class="view active">
+      <header>
+        <h1>Blocks</h1>
+        <div class="header-actions">
+          <button class="icon-btn">↻</button>
+          <button class="icon-btn">?</button>
+        </div>
+      </header>
+
+      <section class="now-section" id="active-session-container" style="display: none;">
+        <h2>Now</h2>
+        <div class="active-session-card">
+          <div class="session-info">
+            <span class="session-icon">💎</span>
+            <div>
+              <h3 id="session-name">My Session</h3>
+              <p id="session-time">Remaining 6:18:40</p>
+            </div>
+          </div>
+          <div class="status-badge" id="session-status">
+            <span class="dot"></span> Blocking · <span id="session-count">5</span>
+          </div>
+          <button class="add-btn" id="btn-stop-session" style="color: #ff6b6b; border-color: #ff6b6b;">Stop</button>
+        </div>
+      </section>
+
+      <section class="more-ideas-section">
+        <h2>More Ideas:</h2>
+        <div class="action-buttons">
+          <button class="primary-btn" id="btn-block-now"><span class="icon">▶️</span> Block Now</button>
+          <button class="secondary-btn"><span class="icon">📅</span> Schedule Session</button>
+        </div>
+
+        <div class="presets-list" id="presets-container">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+    </div>
+
+    <!-- Settings View -->
+    <div id="view-settings" class="view">
+      <header>
+        <h1>Settings</h1>
+      </header>
+      <section>
+        <p style="color: var(--text-secondary);">Manage your Focus Mode preferences.</p>
+        <div class="form-group" style="margin-top: 20px;">
+          <label>Default Session Duration (minutes)</label>
+          <input type="number" id="setting-default-duration" value="60">
+        </div>
+        <button class="btn-submit" id="btn-save-settings" style="padding: 10px 20px; border-radius: 10px; border:none; cursor:pointer;" >Save Settings</button>
+      </section>
+    </div>
+
+    <!-- Feedback View -->
+    <div id="view-feedback" class="view">
+      <header>
+        <h1>Give Feedback</h1>
+      </header>
+      <section>
+        <div class="form-group">
+          <label>What's on your mind?</label>
+          <textarea rows="5" placeholder="Share your thoughts..."></textarea>
+        </div>
+        <button class="btn-submit" style="padding: 10px 20px; border-radius: 10px; border:none; cursor:pointer;">Send Message</button>
+      </section>
+    </div>
+
+  </main>
+
+  <!-- Modals -->
+
+  <!-- New Block / Block Now Modal -->
+  <div class="modal-overlay" id="modal-new-block">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modal-title">Start Block Session</h2>
+        <button class="close-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group" id="group-session-name">
+          <label>Session Name</label>
+          <input type="text" id="input-session-name" placeholder="e.g. Deep Work">
+        </div>
+        <div class="form-group">
+          <label>Duration (Minutes)</label>
+          <input type="number" id="input-session-duration" value="60">
+        </div>
+        <div class="form-group">
+          <label>Blocked Websites (comma separated)</label>
+          <input type="text" id="input-session-sites" placeholder="youtube.com, reddit.com">
+        </div>
+        <div class="form-group">
+          <label>Blocked Apps (comma separated exe)</label>
+          <input type="text" id="input-session-apps" placeholder="notepad.exe, slack.exe">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel close-modal-btn">Cancel</button>
+        <button class="btn-submit" id="btn-start-session-submit">Start Blocking</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
