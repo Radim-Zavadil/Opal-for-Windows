@@ -9,43 +9,64 @@ class Blocker {
     this.activeInterval = null;
     this.START_MARKER = '# FOCUS START';
     this.END_MARKER = '# FOCUS END';
+    
+    this.allowedItems = new Set();
+    this.currentSites = [];
+    this.currentApps = [];
   }
 
   start(sites, apps, onBlockedAppDetected) {
-    if (sites && sites.length > 0) {
-      this.blockSites(sites);
+    this.allowedItems.clear();
+    this.currentSites = [...(sites || [])];
+    this.currentApps = [...(apps || [])];
+
+    if (this.currentSites.length > 0) {
+      this.blockSites(this.currentSites);
     }
     
-    if (apps && apps.length > 0) {
-      this.startAppBlocking(apps, onBlockedAppDetected);
+    if (this.currentApps.length > 0 || this.currentSites.length > 0) {
+      this.startAppBlocking(onBlockedAppDetected);
     }
   }
 
   stop() {
     this.unblockSites();
     this.stopAppBlocking();
+    this.allowedItems.clear();
+    this.currentSites = [];
+    this.currentApps = [];
+  }
+
+  temporarilyAllow(item) {
+    this.allowedItems.add(item);
+    
+    // If it's a site (doesn't end in .exe), remove from active block list and update hosts
+    if (!item.toLowerCase().endsWith('.exe')) {
+      this.currentSites = this.currentSites.filter(s => s !== item);
+      this.blockSites(this.currentSites); // re-generates the host file without the allowed site
+    }
   }
 
   blockSites(sites) {
     try {
       let content = fs.readFileSync(this.hostsPath, 'utf8');
-      
-      // Clean up previous blocks just in case
       content = this.removeBlockFromContent(content);
 
-      let blockEntries = `\n${this.START_MARKER}\n`;
-      sites.forEach(site => {
-        // block both raw and www
-        const domain = site.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
-        blockEntries += `127.0.0.1 ${domain}\n`;
-        blockEntries += `127.0.0.1 www.${domain}\n`;
-      });
-      blockEntries += `${this.END_MARKER}\n`;
-
-      fs.writeFileSync(this.hostsPath, content + blockEntries, 'utf8');
+      if (sites.length > 0) {
+        let blockEntries = `\n${this.START_MARKER}\n`;
+        sites.forEach(site => {
+           const domain = site.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+           blockEntries += `127.0.0.1 ${domain}\n`;
+           blockEntries += `127.0.0.1 www.${domain}\n`;
+        });
+        blockEntries += `${this.END_MARKER}\n`;
+        fs.writeFileSync(this.hostsPath, content + blockEntries, 'utf8');
+      } else {
+        fs.writeFileSync(this.hostsPath, content, 'utf8');
+      }
       this.flushDNS();
     } catch (error) {
-      console.error('Failed to write to hosts file. App needs to run as Administrator.', error);
+       console.error('Failed to write to hosts file.', error);
     }
   }
 
@@ -59,7 +80,7 @@ class Blocker {
         this.flushDNS();
       }
     } catch (error) {
-      console.error('Failed to restore hosts file.', error);
+       console.error('Failed to restore hosts file.', error);
     }
   }
 
@@ -75,20 +96,14 @@ class Blocker {
 
   flushDNS() {
     if (process.platform === 'win32') {
-      exec('ipconfig /flushdns', (err) => {
-        if (err) console.error('Failed to flush DNS:', err);
-      });
-    } else if (process.platform === 'darwin') {
-      exec('sudo killall -HUP mDNSResponder', (err) => {
-        if (err) console.error('Failed to flush DNS:', err);
-      });
+      exec('ipconfig /flushdns', (err) => {});
     }
   }
 
-  startAppBlocking(apps, onBlockedAppDetected) {
-    this.stopAppBlocking(); // prevent duplicate
+  startAppBlocking(onBlockedAppDetected) {
+    this.stopAppBlocking();
     this.activeInterval = setInterval(() => {
-      this.checkApps(apps, onBlockedAppDetected);
+      this.checkApps(onBlockedAppDetected);
     }, 2500);
   }
 
@@ -99,26 +114,49 @@ class Blocker {
     }
   }
 
-  checkApps(blockedApps, onBlockedAppDetected) {
+  checkApps(onBlockedAppDetected) {
     if (process.platform === 'win32') {
-      exec('tasklist /FO CSV /NH', (err, stdout) => {
-        if (err) return;
+      exec('tasklist /V /FO CSV /NH', (err, stdout) => {
+        if (err || !stdout) return;
         
-        // Find if any blocked app is running
-        for (let app of blockedApps) {
-          // ensure app ends with .exe for matching (naive check)
+        let detected = null;
+        const processLines = stdout.toLowerCase().split('\n');
+
+        // Check apps
+        for (let app of this.currentApps) {
+          if (this.allowedItems.has(app)) continue;
+          
           const searchName = app.toLowerCase().endsWith('.exe') ? app.toLowerCase() : app.toLowerCase() + '.exe';
           if (stdout.toLowerCase().includes(`"${searchName}"`)) {
-            if (onBlockedAppDetected) {
-              onBlockedAppDetected(app);
-            }
-            break; // Stop after first match to just show the interrupt
+            detected = app;
+            break;
           }
         }
+
+        // Check sites
+        if (!detected && this.currentSites.length > 0) {
+          for (let line of processLines) {
+             const columns = line.split('","');
+             if (columns.length > 8) {
+               const windowTitle = columns[columns.length - 1] || "";
+               for (let site of this.currentSites) {
+                 if (this.allowedItems.has(site)) continue;
+
+                 const domainName = site.replace(/^https?:\/\//, '').replace(/^www\./, '').split('.')[0];
+                 if (windowTitle.includes(domainName.toLowerCase())) {
+                   detected = site;
+                   break;
+                 }
+               }
+             }
+             if (detected) break;
+          }
+        }
+
+        if (detected && onBlockedAppDetected) {
+          onBlockedAppDetected(detected);
+        }
       });
-    } else {
-      // Stub for macOS (using ps aux) if needed later, 
-      // but prompt asked specifically for Windows desktop app.
     }
   }
 }

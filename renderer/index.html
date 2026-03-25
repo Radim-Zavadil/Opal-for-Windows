@@ -4,20 +4,37 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Focus Mode</title>
+  
+  <!-- Inter Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- Phosphor Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div class="drag-bar"></div>
 
   <div class="sidebar">
-    <button class="new-block-btn" id="btn-new-block">+ New Block</button>
+    <button class="new-block-btn" id="btn-new-block">
+      <i class="ph ph-plus"></i> New Block
+    </button>
     <nav>
-      <a href="#" class="nav-item active" data-target="view-blocks"><span class="icon">🧱</span> Blocks</a>
-      <a href="#" class="nav-item" data-target="view-settings"><span class="icon">⚙️</span> Settings</a>
-      <a href="#" class="nav-item" data-target="view-feedback"><span class="icon">💬</span> Give Feedback</a>
+      <a href="#" class="nav-item active" data-target="view-blocks">
+        <i class="ph ph-squares-four icon"></i> Blocks
+      </a>
+      <a href="#" class="nav-item" data-target="view-settings">
+        <i class="ph ph-gear icon"></i> Settings
+      </a>
+      <a href="#" class="nav-item" data-target="view-feedback">
+        <i class="ph ph-chat-circle icon"></i> Give Feedback
+      </a>
     </nav>
     <div class="user-profile">
-      <span class="avatar">👤</span> DemetriPanici
+      <div class="avatar"><i class="ph ph-user"></i></div> DemetriPanici
     </div>
   </div>
 
@@ -28,8 +45,8 @@
       <header>
         <h1>Blocks</h1>
         <div class="header-actions">
-          <button class="icon-btn">↻</button>
-          <button class="icon-btn">?</button>
+          <button class="icon-btn"><i class="ph ph-arrows-clockwise"></i></button>
+          <button class="icon-btn"><i class="ph ph-question"></i></button>
         </div>
       </header>
 
@@ -37,7 +54,7 @@
         <h2>Now</h2>
         <div class="active-session-card">
           <div class="session-info">
-            <span class="session-icon">💎</span>
+            <i class="ph ph-diamond session-icon" style="color: #60a5fa;"></i>
             <div>
               <h3 id="session-name">My Session</h3>
               <p id="session-time">Remaining 6:18:40</p>
@@ -53,8 +70,12 @@
       <section class="more-ideas-section">
         <h2>More Ideas:</h2>
         <div class="action-buttons">
-          <button class="primary-btn" id="btn-block-now"><span class="icon">▶️</span> Block Now</button>
-          <button class="secondary-btn"><span class="icon">📅</span> Schedule Session</button>
+          <button class="primary-btn" id="btn-block-now">
+            <i class="ph ph-play icon"></i> Block Now
+          </button>
+          <button class="secondary-btn">
+            <i class="ph ph-calendar-blank icon"></i> Schedule Session
+          </button>
         </div>
 
         <div class="presets-list" id="presets-container">
@@ -95,13 +116,11 @@
   </main>
 
   <!-- Modals -->
-
-  <!-- New Block / Block Now Modal -->
   <div class="modal-overlay" id="modal-new-block">
     <div class="modal">
       <div class="modal-header">
         <h2 id="modal-title">Start Block Session</h2>
-        <button class="close-modal">&times;</button>
+        <button class="close-modal"><i class="ph ph-x"></i></button>
       </div>
       <div class="modal-body">
         <div class="form-group" id="group-session-name">

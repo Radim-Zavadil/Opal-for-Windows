@@ -8,6 +8,13 @@ const modalNewBlock = document.getElementById('modal-new-block');
 const btnCloseModals = document.querySelectorAll('.close-modal, .close-modal-btn');
 const btnStartSessionSubmit = document.getElementById('btn-start-session-submit');
 
+// Modal Elements
+const modalTitle = document.getElementById('modal-title');
+const inputSessionName = document.getElementById('input-session-name');
+const inputSessionDuration = document.getElementById('input-session-duration');
+const inputSessionSites = document.getElementById('input-session-sites');
+const inputSessionApps = document.getElementById('input-session-apps');
+
 // State Elements
 const activeSessionContainer = document.getElementById('active-session-container');
 const sessionNameEl = document.getElementById('session-name');
@@ -19,20 +26,18 @@ const btnStopSession = document.getElementById('btn-stop-session');
 const settingDefaultDuration = document.getElementById('setting-default-duration');
 const btnSaveSettings = document.getElementById('btn-save-settings');
 
-// Modals Inputs
-const inputSessionName = document.getElementById('input-session-name');
-const inputSessionDuration = document.getElementById('input-session-duration');
-const inputSessionSites = document.getElementById('input-session-sites');
-const inputSessionApps = document.getElementById('input-session-apps');
-
 // State Variables
 let appConfig = null;
 let currentSessionState = null;
+let isTemplateMode = false;
 
 // Initialization
 document.addEventListener('DOMContentLoaded', async () => {
-  console.log('App connecting via preload API...');
-  
+  if (!window.focusAPI) {
+    console.error('focusAPI is not available! IPC is broken.');
+    return;
+  }
+
   // Load initial data
   appConfig = await window.focusAPI.getConfig();
   currentSessionState = await window.focusAPI.getSessionState();
@@ -65,11 +70,9 @@ function setupNavigation() {
       e.preventDefault();
       const targetId = item.getAttribute('data-target');
       
-      // Update active nav
       navItems.forEach(n => n.classList.remove('active'));
       item.classList.add('active');
 
-      // Update active view
       views.forEach(v => v.classList.remove('active'));
       document.getElementById(targetId).classList.add('active');
     });
@@ -77,16 +80,20 @@ function setupNavigation() {
 }
 
 function setupModals() {
-  const openModal = () => {
+  const openModal = (mode) => {
+    isTemplateMode = mode === 'template';
+    modalTitle.innerText = isTemplateMode ? "Create New Template" : "Start Block Session";
+    btnStartSessionSubmit.innerText = isTemplateMode ? "Create Template" : "Start Blocking";
+    
     inputSessionDuration.value = Math.floor(appConfig.defaultDuration / 60);
-    inputSessionName.value = 'Custom Block';
-    inputSessionSites.value = appConfig.sites.join(', ');
-    inputSessionApps.value = appConfig.apps.join(', ');
+    inputSessionName.value = isTemplateMode ? 'New Block Template' : 'Custom Block';
+    inputSessionSites.value = '';
+    inputSessionApps.value = '';
     modalNewBlock.classList.add('active');
   };
 
-  btnNewBlock.addEventListener('click', openModal);
-  btnBlockNow.addEventListener('click', openModal);
+  btnNewBlock.addEventListener('click', () => openModal('template'));
+  btnBlockNow.addEventListener('click', () => openModal('session'));
 
   btnCloseModals.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -97,24 +104,40 @@ function setupModals() {
 
 function setupActions() {
   btnStartSessionSubmit.addEventListener('click', async () => {
-    const name = inputSessionName.value || 'Custom Block';
-    const duration = parseInt(inputSessionDuration.value) * 60; // to seconds
+    const name = inputSessionName.value || (isTemplateMode ? 'New Block Template' : 'Custom Block');
+    const duration = parseInt(inputSessionDuration.value) * 60;
     const sitesRaw = inputSessionSites.value.split(',').map(s => s.trim()).filter(s => s);
     const appsRaw = inputSessionApps.value.split(',').map(a => a.trim()).filter(a => a);
 
-    const success = await window.focusAPI.startSession({
-      name,
-      duration,
-      sites: sitesRaw,
-      apps: appsRaw
-    });
-
-    if (success) {
+    if (isTemplateMode) {
+      // Save as template
+      appConfig.templates.push({
+        name,
+        desc: `Duration: ${Math.round(duration/60)}m`,
+        icon: 'star',
+        sites: sitesRaw,
+        apps: appsRaw,
+        duration: duration
+      });
+      await window.focusAPI.saveConfig(appConfig);
+      renderPresets(appConfig.templates);
       modalNewBlock.classList.remove('active');
-      currentSessionState = await window.focusAPI.getSessionState();
-      updateSessionUI(currentSessionState);
     } else {
-      alert("A session is already active.");
+      // Start session immediately
+      const success = await window.focusAPI.startSession({
+        name,
+        duration,
+        sites: sitesRaw,
+        apps: appsRaw
+      });
+
+      if (success) {
+        modalNewBlock.classList.remove('active');
+        currentSessionState = await window.focusAPI.getSessionState();
+        updateSessionUI(currentSessionState);
+      } else {
+        alert("A session is already active.");
+      }
     }
   });
 
@@ -131,38 +154,58 @@ function setupActions() {
 
 function renderPresets(templates) {
   presetsContainer.innerHTML = '';
-  templates.forEach(t => {
+  // Fallback map in case of old emoji formats in config
+  const iconMap = { '💻': 'laptop', '☀️': 'sun', '🕯️': 'candle', '🛋️': 'armchair', '🛏️': 'bed' };
+
+  templates.forEach((t, i) => {
+    const pIcon = t.pIcon || iconMap[t.icon] || 'star';
     const card = document.createElement('div');
     card.className = 'preset-card';
     card.innerHTML = `
       <div class="preset-left">
-        <span class="preset-icon">${t.icon}</span>
+        <i class="ph ph-${pIcon} preset-icon"></i>
         <div class="preset-details">
           <h4>${t.name}</h4>
           <p>${t.desc}</p>
         </div>
       </div>
-      <button class="add-btn" onclick="startPreset('${t.name}')">+ Add</button>
+      <div style="display: flex; gap: 8px;">
+        <button class="add-btn start-preset-btn" data-index="${i}">Start</button>
+      </div>
     `;
     presetsContainer.appendChild(card);
   });
-}
 
-// Exposed to window so inline onclick can use it
-window.startPreset = async (name) => {
-  const template = appConfig.templates.find(t => t.name === name);
-  if (template) {
-    inputSessionName.value = template.name;
-    modalNewBlock.classList.add('active');
-  }
-};
+  document.querySelectorAll('.presets-list .start-preset-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const idx = e.target.getAttribute('data-index');
+      const template = templates[idx];
+      if (template) {
+        if (currentSessionState && currentSessionState.active) {
+            alert('A session is already active!');
+            return;
+        }
+        const success = await window.focusAPI.startSession({
+          name: template.name,
+          duration: template.duration || appConfig.defaultDuration,
+          sites: template.sites || appConfig.sites,
+          apps: template.apps || appConfig.apps
+        });
+        if (success) {
+           currentSessionState = await window.focusAPI.getSessionState();
+           updateSessionUI(currentSessionState);
+        }
+      }
+    });
+  });
+}
 
 function updateSessionUI(state) {
   if (state.active) {
     activeSessionContainer.style.display = 'block';
     sessionNameEl.innerText = state.name;
     sessionCountEl.innerText = state.blockedCount;
-    sessionTimeEl.innerText = \`Remaining \${formatTime(state.remainingTime)}\`;
+    sessionTimeEl.innerText = `Remaining ${formatTime(state.remainingTime)}`;
     btnBlockNow.disabled = true;
     btnBlockNow.style.opacity = 0.5;
   } else {
@@ -178,7 +221,7 @@ function formatTime(seconds) {
   const s = seconds % 60;
   
   if (h > 0) {
-    return \`\${h}:\${m.toString().padStart(2, '0')}:\${s.toString().padStart(2, '0')}\`;
+    return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   }
-  return \`\${m.toString().padStart(2, '0')}:\${s.toString().padStart(2, '0')}\`;
+  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
 }

@@ -4,6 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Focus Mode - Blocked</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
   <style>
     body {
       margin: 0;
@@ -15,15 +21,17 @@
       align-items: center;
       background-color: #121212;
       color: #ffffff;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       text-align: center;
     }
     .icon {
       font-size: 80px;
       margin-bottom: 20px;
+      color: #a8f0ef;
     }
     h1 {
       font-size: 48px;
+      font-weight: 500;
       margin-bottom: 10px;
       background: linear-gradient(90deg, #d3ffd0 0%, #a8f0ef 100%);
       -webkit-background-clip: text;
@@ -32,6 +40,7 @@
     p.quote {
       font-size: 20px;
       color: #a0a0a0;
+      font-weight: 500;
       max-width: 600px;
       margin-bottom: 40px;
       line-height: 1.5;
@@ -41,6 +50,7 @@
       padding: 10px 20px;
       border-radius: 20px;
       font-size: 14px;
+      font-weight: 500;
       color: #a0a0a0;
       margin-bottom: 40px;
     }
@@ -51,7 +61,7 @@
       padding: 15px 40px;
       border-radius: 30px;
       font-size: 18px;
-      font-weight: bold;
+      font-weight: 500;
       cursor: pointer;
       box-shadow: 0 4px 15px rgba(168, 240, 239, 0.3);
       transition: opacity 0.2s;
@@ -62,15 +72,11 @@
   </style>
 </head>
 <body>
-  <div class="icon">🛡️</div>
+  <i class="ph ph-shield-check icon"></i>
   <h1 id="headline">Work On Success, Not This Site</h1>
   <p class="quote">"Discipline is choosing between what you want now and what you want most."</p>
   <div class="counter" id="counter">Site blocked today: 1</div>
   <button class="btn" onclick="window.history.back()">Work It!</button>
 
-  <script>
-    // In a real scenario we'd get the site name from the URL or headers, 
-    // but the local server serves this statically. We could inject it via the server.
-  </script>
 </body>
 </html>

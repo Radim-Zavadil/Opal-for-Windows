@@ -1,4 +1,4 @@
-/* Premium Dark Theme variables from screenshot */
+/* Premium Dark Theme variables */
 :root {
   --bg-dark: #121212;
   --sidebar-bg: #1a1a1a;
@@ -9,7 +9,7 @@
   --btn-gradient: linear-gradient(90deg, #d3ffd0 0%, #a8f0ef 100%);
   --btn-hover: linear-gradient(90deg, #bcf0b9 0%, #95e0df 100%);
   --border-color: #333333;
-  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 * {
@@ -34,9 +34,9 @@ body {
   top: 0;
   left: 0;
   width: 100%;
-  height: 30px;
+  height: 25px;
   -webkit-app-region: drag;
-  z-index: 100;
+  z-index: 10; /* Low enough to not block explicit z-index elements */
 }
 
 /* Sidebar */
@@ -48,6 +48,7 @@ body {
   padding: 40px 20px 20px 20px;
   border-right: 1px solid var(--border-color);
   position: relative;
+  z-index: 20;
 }
 
 .new-block-btn {
@@ -56,12 +57,20 @@ body {
   border: none;
   padding: 12px;
   border-radius: 20px;
-  font-weight: 600;
+  font-weight: 500;
   font-size: 15px;
   cursor: pointer;
   margin-bottom: 30px;
   transition: opacity 0.2s, transform 0.1s;
   -webkit-app-region: no-drag;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.new-block-btn i {
+  font-size: 18px;
 }
 
 .new-block-btn:hover {
@@ -89,6 +98,10 @@ nav {
   transition: background-color 0.2s, color 0.2s;
 }
 
+.nav-item i {
+  font-size: 20px;
+}
+
 .nav-item:hover {
   background-color: rgba(255,255,255,0.05);
 }
@@ -105,6 +118,8 @@ nav {
   gap: 10px;
   color: var(--text-secondary);
   font-size: 14px;
+  font-weight: 500;
+  -webkit-app-region: no-drag;
 }
 
 .avatar {
@@ -123,6 +138,7 @@ nav {
   padding: 50px;
   overflow-y: auto;
   position: relative;
+  z-index: 20;
   -webkit-app-region: no-drag;
 }
 
@@ -135,7 +151,7 @@ header {
 
 h1 {
   font-size: 28px;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .header-actions {
@@ -157,6 +173,10 @@ h1 {
   transition: color 0.2s, background 0.2s;
 }
 
+.icon-btn i {
+  font-size: 18px;
+}
+
 .icon-btn:hover {
   color: var(--text-primary);
   background: #333;
@@ -171,7 +191,7 @@ h2 {
   font-size: 16px;
   color: var(--text-secondary);
   margin-bottom: 15px;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 /* Cards */
@@ -182,7 +202,7 @@ h2 {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 3px solid #82e0aa; /* Accent bottom line */
+  border-bottom: 3px solid #82e0aa;
 }
 
 .session-info {
@@ -197,6 +217,7 @@ h2 {
 
 .session-info h3 {
   font-size: 18px;
+  font-weight: 500;
   margin-bottom: 4px;
 }
 
@@ -211,7 +232,7 @@ h2 {
   padding: 6px 12px;
   border-radius: 12px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -237,13 +258,17 @@ h2 {
   border-radius: 16px;
   border: none;
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
   transition: opacity 0.2s;
+}
+
+.action-buttons button i {
+  font-size: 18px;
 }
 
 .primary-btn {
@@ -294,11 +319,12 @@ h2 {
 
 .preset-icon {
   font-size: 20px;
+  color: #a0a0a0;
 }
 
 .preset-details h4 {
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 500;
   margin-bottom: 4px;
 }
 
@@ -314,7 +340,7 @@ h2 {
   padding: 6px 14px;
   border-radius: 20px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -355,6 +381,7 @@ h2 {
   box-shadow: 0 10px 40px rgba(0,0,0,0.5);
   transform: translateY(20px);
   transition: transform 0.3s;
+  pointer-events: auto;
 }
 
 .modal-overlay.active .modal {
@@ -372,6 +399,7 @@ h2 {
   color: white;
   margin: 0;
   font-size: 20px;
+  font-weight: 500;
 }
 
 .close-modal {
@@ -406,6 +434,7 @@ h2 {
   border-radius: 10px;
   font-size: 14px;
   font-family: var(--font-family);
+  font-weight: 500;
 }
 
 .form-group input:focus {
@@ -424,7 +453,7 @@ h2 {
   padding: 10px 20px;
   border-radius: 10px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   border: none;
 }

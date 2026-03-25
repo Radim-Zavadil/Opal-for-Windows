@@ -16,24 +16,39 @@ let sessionState = {
 };
 
 function createMainWindow() {
+  console.log('Creating main window...');
   mainWindow = new BrowserWindow({
     width: 1000,
     height: 700,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js')
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false
     },
     titleBarStyle: 'hidden',
-    titleBarOverlay: {
+    /* titleBarOverlay: {
       color: '#1a1a1a',
       symbolColor: '#ffffff',
-    },
+    }, */
     backgroundColor: '#121212',
     show: false
   });
 
-  mainWindow.loadFile('renderer/index.html');
+  const indexPath = path.join(__dirname, 'renderer', 'index.html');
+  console.log('Loading file:', indexPath);
+  
+  mainWindow.loadFile(indexPath).catch(err => {
+    console.error('Failed to load index.html:', err);
+  });
+
   mainWindow.once('ready-to-show', () => {
+    console.log('Main window ready to show.');
     mainWindow.show();
+    // mainWindow.webContents.openDevTools(); // Uncomment to debug renderer
+  });
+
+  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
+    console.error('Main window failed to load:', errorCode, errorDescription);
   });
 }
 
@@ -112,10 +127,10 @@ ipcMain.handle('start-session', (event, { name, duration, sites, apps }) => {
   sessionState.remainingTime = duration;
   sessionState.blockedCount = sites.length + apps.length;
 
-  blocker.start(sites, apps, () => {
-    // Called when a blocked app is detected
+  blocker.start(sites, apps, (detectedName) => {
+    // Called when a blocked app or site is detected
     if (interruptWindow) {
-      interruptWindow.webContents.send('set-blocked-app', Array.isArray(apps) ? apps[0] : 'App');
+      interruptWindow.webContents.send('set-blocked-app', detectedName);
       interruptWindow.show();
       interruptWindow.setAlwaysOnTop(true, 'screen-saver');
       interruptWindow.focus();
@@ -140,9 +155,32 @@ ipcMain.handle('stop-session', () => {
   return true;
 });
 
-ipcMain.on('close-interrupt', () => {
+ipcMain.on('close-interrupt', (event, appName) => {
   if (interruptWindow) {
     interruptWindow.hide();
+  }
+  if (appName) {
+    blocker.temporarilyAllow(appName);
+  }
+});
+
+const { exec } = require('child_process');
+ipcMain.on('close-interrupt-and-app', (event, appName) => {
+  if (interruptWindow) {
+    interruptWindow.hide();
+  }
+  if (appName) {
+    if (appName.toLowerCase().endsWith('.exe')) {
+      exec(`taskkill /IM ${appName} /F`, (err) => {
+        if (err) console.error('Failed to kill app', err);
+      });
+    } else {
+      // It's a website. Send Ctrl+W to the active browser window.
+      // Small timeout to ensure the overlay is fully hidden and the browser is focused again.
+      setTimeout(() => {
+        exec('powershell -c "$wshell = New-Object -ComObject wscript.shell; $wshell.SendKeys(\'^w\')"');
+      }, 150);
+    }
   }
 });
 
