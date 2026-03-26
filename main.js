@@ -11,6 +11,7 @@ let sessionTimer = null;
 let sessionState = {
   active: false,
   remainingTime: 0,
+  totalDuration: 0,
   name: '',
   blockedCount: 0
 };
@@ -20,6 +21,7 @@ function createMainWindow() {
   mainWindow = new BrowserWindow({
     width: 1000,
     height: 700,
+    icon: path.join(__dirname, 'assets', 'icon.ico'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -58,6 +60,7 @@ function createInterruptWindow() {
   interruptWindow = new BrowserWindow({
     width,
     height,
+    icon: path.join(__dirname, 'assets', 'icon.ico'),
     frame: false,
     transparent: true,
     alwaysOnTop: true,
@@ -125,15 +128,18 @@ ipcMain.handle('start-session', (event, { name, duration, sites, apps }) => {
   sessionState.active = true;
   sessionState.name = name;
   sessionState.remainingTime = duration;
+  sessionState.totalDuration = duration;
   sessionState.blockedCount = sites.length + apps.length;
 
   blocker.start(sites, apps, (detectedName) => {
     // Called when a blocked app or site is detected
     if (interruptWindow) {
-      interruptWindow.webContents.send('set-blocked-app', detectedName);
-      interruptWindow.show();
-      interruptWindow.setAlwaysOnTop(true, 'screen-saver');
-      interruptWindow.focus();
+      if (!interruptWindow.isVisible()) {
+        interruptWindow.webContents.send('set-blocked-app', detectedName);
+        interruptWindow.show();
+        interruptWindow.setAlwaysOnTop(true, 'screen-saver');
+        interruptWindow.focus();
+      }
     }
   });
 

@@ -20,7 +20,7 @@
 
   <div class="sidebar">
     <button class="new-block-btn" id="btn-new-block">
-      <i class="ph ph-plus"></i> New Block
+      <i class="ph ph-plus"></i> <span style="font-weight: 600;">New Block</span>
     </button>
     <nav>
       <a href="#" class="nav-item active" data-target="view-blocks">
@@ -34,7 +34,7 @@
       </a>
     </nav>
     <div class="user-profile">
-      <div class="avatar"><i class="ph ph-user"></i></div> DemetriPanici
+      <div class="avatar"><i class="ph ph-user"></i></div> Radim
     </div>
   </div>
 
@@ -71,10 +71,10 @@
         <h2>More Ideas:</h2>
         <div class="action-buttons">
           <button class="primary-btn" id="btn-block-now">
-            <i class="ph ph-play icon"></i> Block Now
+            <i class="ph ph-play icon gradient-icon"></i> Block Now
           </button>
-          <button class="secondary-btn">
-            <i class="ph ph-calendar-blank icon"></i> Schedule Session
+          <button class="secondary-btn" id="btn-schedule-session">
+            <i class="ph ph-calendar-blank icon gradient-icon"></i> Schedule Session
           </button>
         </div>
 
@@ -111,6 +111,29 @@
         </div>
         <button class="btn-submit" style="padding: 10px 20px; border-radius: 10px; border:none; cursor:pointer;">Send Message</button>
       </section>
+    </div>
+
+    <!-- Active Session View -->
+    <div id="view-active-session" class="view" style="min-height: 100%;">
+      <header>
+        <button class="icon-btn" id="btn-back-to-blocks" style="position: relative; z-index: 10; background: transparent; color: #a0a0a0;"><i class="ph ph-caret-left" style="font-size: 24px;"></i></button>
+      </header>
+      <div id="active-session-bg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; background-size: cover; background-position: center;"></div>
+      
+      <section style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60vh; position: relative; z-index: 10;">
+        <label for="bg-upload" class="secondary-btn" style="cursor: pointer; padding: 10px 20px; border-radius: 10px; font-size: 14px; position: relative; z-index: 20;">Upload Background</label>
+        <input type="file" id="bg-upload" accept="image/*" style="opacity: 0; position: absolute; z-index: -1;">
+      </section>
+
+      <div class="timeline-container">
+        <div style="display: flex; align-items: baseline; justify-content: flex-start; margin-bottom: 20px; padding: 0 20px; gap: 15px;">
+           <h2 id="detail-session-title" style="font-size: 24px; font-weight: 500; color: white; margin: 0;"></h2>
+           <span id="detail-session-time" style="color: #a0a0a0; font-size: 14px; font-weight: 500;"></span>
+        </div>
+        <div class="timeline-track">
+          <div class="timeline-fill" id="timeline-fill"></div>
+        </div>
+      </div>
     </div>
 
   </main>

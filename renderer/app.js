@@ -26,6 +26,15 @@ const btnStopSession = document.getElementById('btn-stop-session');
 const settingDefaultDuration = document.getElementById('setting-default-duration');
 const btnSaveSettings = document.getElementById('btn-save-settings');
 
+// Active Session View Elements
+const viewActiveSession = document.getElementById('view-active-session');
+const btnBackToBlocks = document.getElementById('btn-back-to-blocks');
+const detailSessionTitle = document.getElementById('detail-session-title');
+const timelineFill = document.getElementById('timeline-fill');
+const bgUpload = document.getElementById('bg-upload');
+const activeSessionBg = document.getElementById('active-session-bg');
+const btnScheduleSession = document.getElementById('btn-schedule-session');
+
 // State Variables
 let appConfig = null;
 let currentSessionState = null;
@@ -46,6 +55,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   settingDefaultDuration.value = Math.floor(appConfig.defaultDuration / 60);
   renderPresets(appConfig.templates);
   updateSessionUI(currentSessionState);
+
+  // Restore background
+  const savedBg = localStorage.getItem('customBackground');
+  if (savedBg) {
+    activeSessionBg.style.backgroundImage = `url(${savedBg})`;
+  }
 
   // Setup Event Listeners
   setupNavigation();
@@ -94,6 +109,7 @@ function setupModals() {
 
   btnNewBlock.addEventListener('click', () => openModal('template'));
   btnBlockNow.addEventListener('click', () => openModal('session'));
+  btnScheduleSession.addEventListener('click', () => openModal('session'));
 
   btnCloseModals.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -141,14 +157,52 @@ function setupActions() {
     }
   });
 
-  btnStopSession.addEventListener('click', async () => {
+  btnStopSession.addEventListener('click', async (e) => {
+    e.stopPropagation();
     await window.focusAPI.stopSession();
+    if (document.getElementById('view-active-session').classList.contains('active')) {
+      views.forEach(v => v.classList.remove('active'));
+      document.getElementById('view-blocks').classList.add('active');
+    }
   });
 
   btnSaveSettings.addEventListener('click', async () => {
     appConfig.defaultDuration = parseInt(settingDefaultDuration.value) * 60;
     await window.focusAPI.saveConfig(appConfig);
     alert('Settings saved!');
+  });
+
+  // Active session card click -> detail view
+  document.querySelector('.active-session-card').addEventListener('click', (e) => {
+    if (e.target.id === 'btn-stop-session') return;
+    views.forEach(v => v.classList.remove('active'));
+    document.getElementById('view-active-session').classList.add('active');
+    detailSessionTitle.innerText = currentSessionState.name;
+    // Set initial timeline state
+    updateTimeline(currentSessionState);
+  });
+
+  // Detail view back button
+  btnBackToBlocks.addEventListener('click', () => {
+    views.forEach(v => v.classList.remove('active'));
+    document.getElementById('view-blocks').classList.add('active');
+  });
+
+  // Background upload logic
+  bgUpload.addEventListener('change', (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const result = event.target.result;
+        activeSessionBg.style.backgroundImage = `url(${result})`;
+        try {
+          localStorage.setItem('customBackground', result);
+        } catch(err) {
+           console.error('Image too large to persist locally', err);
+        }
+      };
+      reader.readAsDataURL(e.target.files[0]);
+    }
   });
 }
 
@@ -204,14 +258,32 @@ function updateSessionUI(state) {
   if (state.active) {
     activeSessionContainer.style.display = 'block';
     sessionNameEl.innerText = state.name;
-    sessionCountEl.innerText = state.blockedCount;
+    sessionCountEl.innerText = state.blockedCount || 0;
     sessionTimeEl.innerText = `Remaining ${formatTime(state.remainingTime)}`;
     btnBlockNow.disabled = true;
     btnBlockNow.style.opacity = 0.5;
+    
+    updateTimeline(state);
   } else {
     activeSessionContainer.style.display = 'none';
     btnBlockNow.disabled = false;
     btnBlockNow.style.opacity = 1;
+    timelineFill.style.width = '0%';
+  }
+}
+
+function updateTimeline(state) {
+  if (!state || !state.active) return;
+  const total = state.totalDuration || appConfig.defaultDuration;
+  
+  // Progress goes from 0 to 100 as time elapses. With margin-left auto, this fills from right to left.
+  const elapsed = total - state.remainingTime;
+  const progress = Math.min((elapsed / total) * 100, 100);
+  timelineFill.style.width = `${progress}%`;
+  
+  const detailTimeEl = document.getElementById('detail-session-time');
+  if (detailTimeEl) {
+    detailTimeEl.innerText = formatTime(state.remainingTime);
   }
 }
 
