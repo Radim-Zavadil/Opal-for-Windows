@@ -9,11 +9,15 @@ const btnCloseModals = document.querySelectorAll('.close-modal, .close-modal-btn
 const btnStartSessionSubmit = document.getElementById('btn-start-session-submit');
 
 // Modal Elements
-const modalTitle = document.getElementById('modal-title');
-const inputSessionName = document.getElementById('input-session-name');
-const inputSessionDuration = document.getElementById('input-session-duration');
+const modalEditableTitle = document.getElementById('modal-editable-title');
+const inputHours = document.getElementById('input-hours');
+const inputMinutes = document.getElementById('input-minutes');
 const inputSessionSites = document.getElementById('input-session-sites');
 const inputSessionApps = document.getElementById('input-session-apps');
+const btnDeletePreset = document.getElementById('btn-delete-preset');
+const inputSessionIcon = document.getElementById('input-session-icon');
+const modalIconPreview = document.getElementById('modal-icon-preview');
+const rowIconUpload = document.getElementById('row-icon-upload');
 
 // State Elements
 const activeSessionContainer = document.getElementById('active-session-container');
@@ -38,7 +42,9 @@ const btnScheduleSession = document.getElementById('btn-schedule-session');
 // State Variables
 let appConfig = null;
 let currentSessionState = null;
-let isTemplateMode = false;
+let modalMode = 'session'; // 'session', 'template', 'edit-template'
+let editingTemplateIdx = -1;
+let selectedIconData = null;
 
 // Initialization
 document.addEventListener('DOMContentLoaded', async () => {
@@ -95,46 +101,112 @@ function setupNavigation() {
 }
 
 function setupModals() {
-  const openModal = (mode) => {
-    isTemplateMode = mode === 'template';
-    modalTitle.innerText = isTemplateMode ? "Create New Template" : "Start Block Session";
-    btnStartSessionSubmit.innerText = isTemplateMode ? "Create Template" : "Start Blocking";
+  window.openModal = (mode, tIdx = -1) => {
+    modalMode = mode;
+    editingTemplateIdx = tIdx;
+    selectedIconData = null;
     
-    inputSessionDuration.value = Math.floor(appConfig.defaultDuration / 60);
-    inputSessionName.value = isTemplateMode ? 'New Block Template' : 'Custom Block';
-    inputSessionSites.value = '';
-    inputSessionApps.value = '';
+    // Reset defaults
+    btnDeletePreset.style.display = (mode === 'edit-template') ? 'block' : 'none';
+    rowIconUpload.style.display = (mode === 'session') ? 'none' : 'flex'; 
+
+    if (mode === 'template') {
+      modalEditableTitle.innerText = "Focus Session";
+      btnStartSessionSubmit.innerText = "Create Template";
+      inputHours.value = 1;
+      inputMinutes.value = 0;
+      inputSessionSites.value = '';
+      inputSessionApps.value = '';
+      modalIconPreview.innerHTML = '<i class="ph ph-star"></i>';
+    } else if (mode === 'session') {
+      modalEditableTitle.innerText = "Focus Session";
+      btnStartSessionSubmit.innerText = "Start Now";
+      inputHours.value = Math.floor(appConfig.defaultDuration / 3600) || 1;
+      inputMinutes.value = Math.floor((appConfig.defaultDuration % 3600) / 60) || 0;
+      inputSessionSites.value = '';
+      inputSessionApps.value = '';
+    } else if (mode === 'edit-template') {
+      const t = appConfig.templates[tIdx];
+      modalEditableTitle.innerText = t.name;
+      btnStartSessionSubmit.innerText = "Update";
+      inputHours.value = Math.floor((t.duration || 3600) / 3600);
+      inputMinutes.value = Math.floor(((t.duration || 3600) % 3600) / 60);
+      inputSessionSites.value = (t.sites || []).join(', ');
+      inputSessionApps.value = (t.apps || []).join(', ');
+      
+      if (t.iconData) {
+        modalIconPreview.innerHTML = `<img src="${t.iconData}">`;
+        selectedIconData = t.iconData;
+      } else {
+        const pIcon = t.pIcon || 'star';
+        modalIconPreview.innerHTML = `<i class="ph ph-${pIcon}"></i>`;
+      }
+    }
+
     modalNewBlock.classList.add('active');
   };
 
-  btnNewBlock.addEventListener('click', () => openModal('template'));
-  btnBlockNow.addEventListener('click', () => openModal('session'));
-  btnScheduleSession.addEventListener('click', () => openModal('session'));
+  btnNewBlock.addEventListener('click', () => window.openModal('template'));
+  btnBlockNow.addEventListener('click', () => window.openModal('session'));
+  btnScheduleSession?.addEventListener('click', () => window.openModal('session'));
 
   btnCloseModals.forEach(btn => {
     btn.addEventListener('click', () => {
       modalNewBlock.classList.remove('active');
     });
   });
+
+  // Icon upload logic
+  inputSessionIcon.addEventListener('change', (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        selectedIconData = event.target.result;
+        modalIconPreview.innerHTML = `<img src="${selectedIconData}">`;
+      };
+      reader.readAsDataURL(e.target.files[0]);
+    }
+  });
+
+  // Delete Template logic
+  btnDeletePreset.addEventListener('click', async () => {
+    if (editingTemplateIdx > -1) {
+      if (confirm('Are you sure you want to delete this template?')) {
+        appConfig.templates.splice(editingTemplateIdx, 1);
+        await window.focusAPI.saveConfig(appConfig);
+        renderPresets(appConfig.templates);
+        modalNewBlock.classList.remove('active');
+      }
+    }
+  });
 }
 
 function setupActions() {
   btnStartSessionSubmit.addEventListener('click', async () => {
-    const name = inputSessionName.value || (isTemplateMode ? 'New Block Template' : 'Custom Block');
-    const duration = parseInt(inputSessionDuration.value) * 60;
+    const name = modalEditableTitle.innerText.trim() || "Focus Session";
+    const duration = (parseInt(inputHours.value || 0) * 3600) + (parseInt(inputMinutes.value || 0) * 60);
     const sitesRaw = inputSessionSites.value.split(',').map(s => s.trim()).filter(s => s);
     const appsRaw = inputSessionApps.value.split(',').map(a => a.trim()).filter(a => a);
 
-    if (isTemplateMode) {
-      // Save as template
-      appConfig.templates.push({
+    if (modalMode === 'template' || modalMode === 'edit-template') {
+      const templateData = {
         name,
-        desc: `Duration: ${Math.round(duration/60)}m`,
-        icon: 'star',
+        desc: `Duration: ${Math.floor(duration/3600)}h ${Math.floor((duration%3600)/60)}m`,
+        pIcon: 'star', // fallback
+        iconData: selectedIconData || null,
         sites: sitesRaw,
         apps: appsRaw,
         duration: duration
-      });
+      };
+
+      if (modalMode === 'template') {
+        appConfig.templates.push(templateData);
+      } else {
+        // preserve iconData if not changed? 
+        // selectedIconData is null if not changed, but we set it in openModal from t.iconData
+        appConfig.templates[editingTemplateIdx] = templateData;
+      }
+
       await window.focusAPI.saveConfig(appConfig);
       renderPresets(appConfig.templates);
       modalNewBlock.classList.remove('active');
@@ -212,21 +284,42 @@ function renderPresets(templates) {
   const iconMap = { '💻': 'laptop', '☀️': 'sun', '🕯️': 'candle', '🛋️': 'armchair', '🛏️': 'bed' };
 
   templates.forEach((t, i) => {
-    const pIcon = t.pIcon || iconMap[t.icon] || 'star';
     const card = document.createElement('div');
     card.className = 'preset-card';
+    card.style.cursor = 'pointer';
+    
+    let iconHTML = '';
+    if (t.iconData) {
+      iconHTML = `<div class="preset-icon-circle"><img src="${t.iconData}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;"></div>`;
+    } else {
+      const pIcon = t.pIcon || iconMap[t.icon] || 'star';
+      iconHTML = `<i class="ph ph-${pIcon} preset-icon"></i>`;
+    }
+
     card.innerHTML = `
       <div class="preset-left">
-        <i class="ph ph-${pIcon} preset-icon"></i>
+        ${iconHTML}
         <div class="preset-details">
           <h4>${t.name}</h4>
           <p>${t.desc}</p>
         </div>
       </div>
       <div style="display: flex; gap: 8px;">
-        <button class="add-btn start-preset-btn" data-index="${i}">Start</button>
+        <button class="add-btn start-preset-btn" data-index="${i}">Start Now</button>
       </div>
     `;
+    
+    // Whole card click opens setup (Update/Delete)
+    card.addEventListener('click', (e) => {
+      if (e.target.classList.contains('start-preset-btn')) return;
+      // Use the closeModal logic if we want to ensure only one modal
+      // We need to call the setupModals' local openModal. 
+      // Let's expose it or just trigger it.
+      // Easiest is to just call a global one or find a way.
+      // I'll define openModal as a higher scope function.
+      window.openModal('edit-template', i);
+    });
+
     presetsContainer.appendChild(card);
   });
 

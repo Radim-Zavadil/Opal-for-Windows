@@ -24,17 +24,17 @@
     </button>
     <nav>
       <a href="#" class="nav-item active" data-target="view-blocks">
-        <i class="ph ph-squares-four icon"></i> Blocks
+        <i class="ph ph-squares-four icon gradient-icon"></i> Blocks
       </a>
       <a href="#" class="nav-item" data-target="view-settings">
-        <i class="ph ph-gear icon"></i> Settings
+        <i class="ph ph-gear icon gradient-icon"></i> Settings
       </a>
       <a href="#" class="nav-item" data-target="view-feedback">
-        <i class="ph ph-chat-circle icon"></i> Give Feedback
+        <i class="ph ph-chat-circle icon gradient-icon"></i> Give Feedback
       </a>
     </nav>
     <div class="user-profile">
-      <div class="avatar"><i class="ph ph-user"></i></div> Radim
+      <div class="avatar"><i class="ph ph-user"></i></div> User
     </div>
   </div>
 
@@ -44,10 +44,7 @@
     <div id="view-blocks" class="view active">
       <header>
         <h1>Blocks</h1>
-        <div class="header-actions">
-          <button class="icon-btn"><i class="ph ph-arrows-clockwise"></i></button>
-          <button class="icon-btn"><i class="ph ph-question"></i></button>
-        </div>
+
       </header>
 
       <section class="now-section" id="active-session-container" style="display: none;">
@@ -69,12 +66,9 @@
 
       <section class="more-ideas-section">
         <h2>More Ideas:</h2>
-        <div class="action-buttons">
+        <div class="action-buttons" style="grid-template-columns: 1fr;">
           <button class="primary-btn" id="btn-block-now">
             <i class="ph ph-play icon gradient-icon"></i> Block Now
-          </button>
-          <button class="secondary-btn" id="btn-schedule-session">
-            <i class="ph ph-calendar-blank icon gradient-icon"></i> Schedule Session
           </button>
         </div>
 
@@ -142,30 +136,60 @@
   <div class="modal-overlay" id="modal-new-block">
     <div class="modal">
       <div class="modal-header">
-        <h2 id="modal-title">Start Block Session</h2>
+        <h2 id="modal-editable-title" contenteditable="true">Focus Session</h2>
         <button class="close-modal"><i class="ph ph-x"></i></button>
       </div>
       <div class="modal-body">
-        <div class="form-group" id="group-session-name">
-          <label>Session Name</label>
-          <input type="text" id="input-session-name" placeholder="e.g. Deep Work">
-        </div>
-        <div class="form-group">
-          <label>Duration (Minutes)</label>
-          <input type="number" id="input-session-duration" value="60">
-        </div>
-        <div class="form-group">
-          <label>Blocked Websites (comma separated)</label>
-          <input type="text" id="input-session-sites" placeholder="youtube.com, reddit.com">
-        </div>
-        <div class="form-group">
-          <label>Blocked Apps (comma separated exe)</label>
-          <input type="text" id="input-session-apps" placeholder="notepad.exe, slack.exe">
+        <div class="modal-rows-container">
+          <div class="modal-row">
+            <div class="modal-row-left">
+              <i class="ph ph-clock"></i>
+              <span>Time</span>
+            </div>
+            <div class="modal-row-right time-inputs">
+              <input type="number" id="input-hours" value="1" min="0"> <span class="unit">h</span>
+              <input type="number" id="input-minutes" value="0" min="0" max="59"> <span class="unit">m</span>
+            </div>
+          </div>
+
+          <div class="modal-row">
+            <div class="modal-row-left">
+              <i class="ph ph-globe"></i>
+              <span>Blocked Websites</span>
+            </div>
+            <div class="modal-row-right">
+              <input type="text" id="input-session-sites" placeholder="youtube.com, ...">
+            </div>
+          </div>
+
+          <div class="modal-row">
+            <div class="modal-row-left">
+              <i class="ph ph-app-window"></i>
+              <span>Blocked Apps</span>
+            </div>
+            <div class="modal-row-right">
+              <input type="text" id="input-session-apps" placeholder="notepad.exe, ...">
+            </div>
+          </div>
+
+          <div class="modal-row" id="row-icon-upload">
+            <div class="modal-row-left">
+              <i class="ph ph-image"></i>
+              <span>Session Icon</span>
+            </div>
+            <div class="modal-row-right icon-upload-cell">
+              <div id="modal-icon-preview" class="icon-preview-circle"><i class="ph ph-star"></i></div>
+              <label for="input-session-icon" class="upload-label">Upload</label>
+              <input type="file" id="input-session-icon" accept="image/*" style="display: none;">
+            </div>
+          </div>
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn-cancel close-modal-btn">Cancel</button>
-        <button class="btn-submit" id="btn-start-session-submit">Start Blocking</button>
+        <button class="btn-delete" id="btn-delete-preset" style="display: none;">Delete</button>
+        <div style="flex-grow: 1;"></div>
+        <button class="btn-cancel-text close-modal-btn">Cancel</button>
+        <button class="btn-submit" id="btn-start-session-submit">Start Now</button>
       </div>
     </div>
   </div>
