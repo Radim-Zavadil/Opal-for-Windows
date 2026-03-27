@@ -13,6 +13,9 @@ class Blocker {
     this.allowedItems = new Set();
     this.currentSites = [];
     this.currentApps = [];
+
+    // Cleanup any stale blocks on startup
+    this.unblockSites();
   }
 
   start(sites, apps, onBlockedAppDetected) {
