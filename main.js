@@ -10,11 +10,18 @@ let interruptWindow;
 let sessionTimer = null;
 let sessionState = {
   active: false,
+  status: 'none',
   remainingTime: 0,
   totalDuration: 0,
   name: '',
-  blockedCount: 0
+  blockedCount: 0,
+  iconData: null,
+  pIcon: 'star',
+  sites: [],
+  apps: []
 };
+
+let pauseBlockerUntil = 0;
 
 function createMainWindow() {
   console.log('Creating main window...');
@@ -106,6 +113,15 @@ app.on('will-quit', () => {
   blocker.stop();
 });
 
+app.on('before-quit', () => {
+  server.stop();
+  blocker.stop();
+});
+
+app.on('quit', () => {
+  blocker.stop();
+});
+
 // -- IPC Handlers --
 
 ipcMain.handle('get-config', () => {
@@ -122,16 +138,23 @@ ipcMain.handle('get-session-state', () => {
   return sessionState;
 });
 
-ipcMain.handle('start-session', (event, { name, duration, sites, apps }) => {
+ipcMain.handle('start-session', (event, { name, duration, sites, apps, iconData, pIcon }) => {
   if (sessionState.active) return false;
 
   sessionState.active = true;
+  sessionState.status = 'active';
   sessionState.name = name;
   sessionState.remainingTime = duration;
   sessionState.totalDuration = duration;
   sessionState.blockedCount = sites.length + apps.length;
+  sessionState.iconData = iconData || null;
+  sessionState.pIcon = pIcon || 'star';
+  sessionState.sites = sites || [];
+  sessionState.apps = apps || [];
 
   blocker.start(sites, apps, (detectedName) => {
+    if (Date.now() < pauseBlockerUntil) return;
+    
     // Called when a blocked app or site is detected
     if (interruptWindow) {
       if (!interruptWindow.isVisible()) {
@@ -161,6 +184,41 @@ ipcMain.handle('stop-session', () => {
   return true;
 });
 
+ipcMain.handle('resume-session', () => {
+  if (sessionState.status === 'stopped') {
+    sessionState.active = true;
+    sessionState.status = 'active';
+
+    blocker.start(sessionState.sites, sessionState.apps, (detectedName) => {
+      if (Date.now() < pauseBlockerUntil) return;
+      if (interruptWindow) {
+        if (!interruptWindow.isVisible()) {
+          interruptWindow.webContents.send('set-blocked-app', detectedName);
+          interruptWindow.show();
+          interruptWindow.setAlwaysOnTop(true, 'screen-saver');
+          interruptWindow.focus();
+        }
+      }
+    });
+
+    sessionTimer = setInterval(() => {
+      sessionState.remainingTime--;
+      if (sessionState.remainingTime <= 0) {
+        stopSession();
+      }
+      if (mainWindow) {
+        mainWindow.webContents.send('session-tick', sessionState);
+      }
+    }, 1000);
+    
+    // Send immediate tick so UI updates instantly
+    if (mainWindow) {
+      mainWindow.webContents.send('session-tick', sessionState);
+    }
+  }
+  return true;
+});
+
 ipcMain.on('close-interrupt', (event, appName) => {
   if (interruptWindow) {
     interruptWindow.hide();
@@ -175,6 +233,9 @@ ipcMain.on('close-interrupt-and-app', (event, appName) => {
   if (interruptWindow) {
     interruptWindow.hide();
   }
+  
+  pauseBlockerUntil = Date.now() + 3500; // Pause for 3.5s to let the app close smoothly
+
   if (appName) {
     if (appName.toLowerCase().endsWith('.exe')) {
       exec(`taskkill /IM ${appName} /F`, (err) => {
@@ -193,7 +254,7 @@ ipcMain.on('close-interrupt-and-app', (event, appName) => {
 function stopSession() {
   if (sessionTimer) clearInterval(sessionTimer);
   sessionState.active = false;
-  sessionState.remainingTime = 0;
+  sessionState.status = 'stopped';
   blocker.stop();
   
   if (interruptWindow) {

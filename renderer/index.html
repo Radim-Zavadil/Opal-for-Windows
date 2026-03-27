@@ -1,20 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Focus Mode</title>
-  
+
   <!-- Inter Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
-  
+
   <!-- Phosphor Icons -->
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
-  
+
   <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
   <div class="drag-bar"></div>
 
@@ -39,7 +41,7 @@
   </div>
 
   <main class="content">
-    
+
     <!-- Blocks View -->
     <div id="view-blocks" class="view active">
       <header>
@@ -51,16 +53,23 @@
         <h2>Now</h2>
         <div class="active-session-card">
           <div class="session-info">
-            <i class="ph ph-diamond session-icon" style="color: #60a5fa;"></i>
+            <div id="session-icon-container">
+              <i class="ph ph-diamond session-icon" style="color: #a0a0a0;"></i>
+            </div>
             <div>
               <h3 id="session-name">My Session</h3>
               <p id="session-time">Remaining 6:18:40</p>
             </div>
           </div>
           <div class="status-badge" id="session-status">
-            <span class="dot"></span> Blocking · <span id="session-count">5</span>
+            <span class="dot" id="session-status-dot"></span> <span id="session-status-text">Blocking</span> · <span
+              id="session-count">5</span>
           </div>
           <button class="add-btn" id="btn-stop-session" style="color: #ff6b6b; border-color: #ff6b6b;">Stop</button>
+          <button class="add-btn" id="btn-resume-session"
+            style="display: none; color: #a0a0a0; border-color: #a0a0a0;">Resume</button>
+          <button class="add-btn" id="btn-clear-session"
+            style="display: none; color: #a0a0a0; border-color: #a0a0a0;">Clear</button>
         </div>
       </section>
 
@@ -89,7 +98,21 @@
           <label>Default Session Duration (minutes)</label>
           <input type="number" id="setting-default-duration" value="60">
         </div>
-        <button class="btn-submit" id="btn-save-settings" style="padding: 10px 20px; border-radius: 10px; border:none; cursor:pointer;" >Save Settings</button>
+        <div class="form-group" style="margin-top: 20px;">
+          <label>Global Session Background <span style="font-size: 12px; color: #a0a0a0;">(Applies to all sessions)</span></label>
+          <div style="display: flex; align-items: center; gap: 15px;">
+            <div id="setting-bg-preview" style="width: 120px; height: 68px; background: #333; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+              <i class="ph ph-image" style="color: #a0a0a0; font-size: 24px;"></i>
+            </div>
+            <div style="position: relative; overflow: hidden; border-radius: 8px;">
+              <div class="secondary-btn" style="cursor: pointer; padding: 8px 16px; font-size: 13px; text-align: center;">Upload Image</div>
+              <input type="file" id="setting-bg-upload" accept="image/*" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
+            </div>
+            <button class="btn-delete" id="btn-clear-setting-bg" style="display: none; padding: 8px 16px; margin: 0;">Clear</button>
+          </div>
+        </div>
+        <button class="btn-submit" id="btn-save-settings"
+          style="padding: 10px 20px; border-radius: 10px; border:none; cursor:pointer;">Save Settings</button>
       </section>
     </div>
 
@@ -103,26 +126,40 @@
           <label>What's on your mind?</label>
           <textarea rows="5" placeholder="Share your thoughts..."></textarea>
         </div>
-        <button class="btn-submit" style="padding: 10px 20px; border-radius: 10px; border:none; cursor:pointer;">Send Message</button>
+        <button class="btn-submit" style="padding: 10px 20px; border-radius: 10px; border:none; cursor:pointer;">Send
+          Message</button>
       </section>
     </div>
 
     <!-- Active Session View -->
-    <div id="view-active-session" class="view" style="min-height: 100%;">
-      <header>
-        <button class="icon-btn" id="btn-back-to-blocks" style="position: relative; z-index: 10; background: transparent; color: #a0a0a0;"><i class="ph ph-caret-left" style="font-size: 24px;"></i></button>
+    <div id="view-active-session" class="view" style="height: calc(100vh - 100px); position: relative;">
+      <header style="display: flex; justify-content: space-between; align-items: center;">
+        <button class="icon-btn" id="btn-back-to-blocks"
+          style="position: relative; z-index: 10; background: transparent; color: #a0a0a0; padding: 10px; border: none; cursor: pointer;"><i
+            class="ph ph-caret-left" style="font-size: 24px;"></i></button>
       </header>
-      <div id="active-session-bg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; background-size: cover; background-position: center;"></div>
-      
-      <section style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60vh; position: relative; z-index: 10;">
-        <label for="bg-upload" class="secondary-btn" style="cursor: pointer; padding: 10px 20px; border-radius: 10px; font-size: 14px; position: relative; z-index: 20;">Upload Background</label>
-        <input type="file" id="bg-upload" accept="image/*" style="opacity: 0; position: absolute; z-index: -1;">
-      </section>
+      <img id="active-session-bg"
+        style="position: absolute; top: -50px; left: -50px; width: calc(100% + 100px); height: calc(100% + 100px); z-index: 0; object-fit: cover; opacity: 0.5; pointer-events: none; display: none;" />
+      <div id="active-session-bg-overlay"
+        style="position: absolute; top: -50px; left: -50px; width: calc(100% + 100px); height: calc(100% + 100px); z-index: 1; pointer-events: none; display: none; box-shadow: inset 0 0 200px 100px rgba(0,0,0,0.9);"></div>
+
+
 
       <div class="timeline-container">
-        <div style="display: flex; align-items: baseline; justify-content: flex-start; margin-bottom: 20px; padding: 0 20px; gap: 15px;">
-           <h2 id="detail-session-title" style="font-size: 24px; font-weight: 500; color: white; margin: 0;"></h2>
-           <span id="detail-session-time" style="color: #a0a0a0; font-size: 14px; font-weight: 500;"></span>
+        <div
+          style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 20px; padding: 0 20px; gap: 15px;">
+          <div style="display: flex; align-items: baseline; gap: 15px;">
+            <h2 id="detail-session-title" style="font-size: 24px; font-weight: 500; color: white; margin: 0;"></h2>
+            <span id="detail-session-time" style="color: #a0a0a0; font-size: 14px; font-weight: 500;"></span>
+          </div>
+          <div>
+            <button class="add-btn" id="btn-detail-stop-session"
+              style="position: relative; z-index: 10; color: #a0a0a0; border-color: #a0a0a0;">Stop</button>
+            <button class="add-btn" id="btn-detail-resume-session"
+              style="display: none; position: relative; z-index: 10; color: #a0a0a0; border-color: #a0a0a0;">Resume</button>
+            <button class="add-btn" id="btn-detail-clear-session"
+              style="display: none; position: relative; z-index: 10; color: #a0a0a0; border-color: #a0a0a0;">Clear</button>
+          </div>
         </div>
         <div class="timeline-track">
           <div class="timeline-fill" id="timeline-fill"></div>
@@ -196,4 +233,5 @@
 
   <script src="app.js"></script>
 </body>
+
 </html>

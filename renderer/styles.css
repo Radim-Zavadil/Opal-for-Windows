@@ -221,7 +221,6 @@ h2 {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 3px solid #82e0aa;
   cursor: pointer;
   transition: transform 0.2s ease;
 }
@@ -308,6 +307,7 @@ h2 {
 .secondary-btn {
   background: var(--card-bg);
   color: var(--text-secondary);
+  -webkit-app-region: no-drag;
 }
 
 .secondary-btn:hover {
@@ -350,7 +350,7 @@ h2 {
 .preset-icon-circle {
   width: 40px;
   height: 40px;
-  background: #333;
+  background: transparent;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -406,14 +406,14 @@ h2 {
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  display: none;
   opacity: 0;
-  pointer-events: none;
   transition: opacity 0.3s;
 }
 
 .modal-overlay.active {
+  display: flex;
   opacity: 1;
-  pointer-events: auto;
 }
 
 .modal {
@@ -531,7 +531,7 @@ h2 {
 .icon-preview-circle {
   width: 36px;
   height: 36px;
-  background: #333;
+  background: transparent;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -590,6 +590,7 @@ h2 {
   font-size: 14px;
   font-family: var(--font-family);
   font-weight: 500;
+  -webkit-app-region: no-drag;
 }
 
 .form-group input:focus {
@@ -645,6 +646,7 @@ h2 {
   color: #121212;
   border-radius: 30px !important;
   font-weight: 600 !important;
+  -webkit-app-region: no-drag;
 }
 
 .btn-submit:hover { opacity: 0.9; }
@@ -670,9 +672,9 @@ h2 {
 /* Active Session Timeline */
 .timeline-container {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
+  bottom: -50px;
+  left: -50px;
+  width: calc(100% + 100px);
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
