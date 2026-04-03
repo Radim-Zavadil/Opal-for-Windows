@@ -10,11 +10,13 @@
   "build": {
     "appId": "com.radimzavadil.opal",
     "productName": "Opal",
+    "icon": "assets/icon.ico",
     "mac": {
       "target": "dmg"
     },
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "assets/icon.ico"
     },
     "linux": {
       "target": "AppImage"
