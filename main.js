@@ -1,8 +1,8 @@
 const { app, BrowserWindow, ipcMain, screen } = require('electron');
 const path = require('path');
+const { exec } = require('child_process');
 const config = require('./services/config');
 const blocker = require('./services/blocker');
-const server = require('./services/server');
 
 let mainWindow;
 let interruptWindow;
@@ -71,8 +71,9 @@ function createInterruptWindow() {
     frame: false,
     transparent: true,
     alwaysOnTop: true,
-    skipTaskbar: true,
+    skipTaskbar: false,
     show: false,
+    title: 'Focus Interrupted',
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false
@@ -93,7 +94,6 @@ function createInterruptWindow() {
 app.whenReady().then(() => {
   createMainWindow();
   createInterruptWindow();
-  server.start();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -109,12 +109,12 @@ app.on('window-all-closed', () => {
 });
 
 app.on('will-quit', () => {
-  server.stop();
+  // server.stop(); // Removed server logic
   blocker.stop();
 });
 
 app.on('before-quit', () => {
-  server.stop();
+  // server.stop(); // Removed server logic
   blocker.stop();
 });
 
@@ -152,17 +152,15 @@ ipcMain.handle('start-session', (event, { name, duration, sites, apps, iconData,
   sessionState.sites = sites || [];
   sessionState.apps = apps || [];
 
-  blocker.start(sites, apps, (detectedName) => {
+  blocker.start(sites, apps, (detectedName, pids) => {
     if (Date.now() < pauseBlockerUntil) return;
     
-    // Called when a blocked app or site is detected
-    if (interruptWindow) {
-      if (!interruptWindow.isVisible()) {
-        interruptWindow.webContents.send('set-blocked-app', detectedName);
-        interruptWindow.show();
-        interruptWindow.setAlwaysOnTop(true, 'screen-saver');
-        interruptWindow.focus();
-      }
+    if (interruptWindow && !blocker.isShowingOverlay(detectedName)) {
+      blocker.setOverlayShown(detectedName, true);
+      interruptWindow.webContents.send('set-blocked-app', detectedName, pids);
+      interruptWindow.show();
+      interruptWindow.setAlwaysOnTop(true, 'screen-saver');
+      interruptWindow.focus();
     }
   });
 
@@ -189,15 +187,14 @@ ipcMain.handle('resume-session', () => {
     sessionState.active = true;
     sessionState.status = 'active';
 
-    blocker.start(sessionState.sites, sessionState.apps, (detectedName) => {
+    blocker.start(sessionState.sites, sessionState.apps, (detectedName, pids) => {
       if (Date.now() < pauseBlockerUntil) return;
-      if (interruptWindow) {
-        if (!interruptWindow.isVisible()) {
-          interruptWindow.webContents.send('set-blocked-app', detectedName);
-          interruptWindow.show();
-          interruptWindow.setAlwaysOnTop(true, 'screen-saver');
-          interruptWindow.focus();
-        }
+      if (interruptWindow && !blocker.isShowingOverlay(detectedName)) {
+        blocker.setOverlayShown(detectedName, true);
+        interruptWindow.webContents.send('set-blocked-app', detectedName, pids);
+        interruptWindow.show();
+        interruptWindow.setAlwaysOnTop(true, 'screen-saver');
+        interruptWindow.focus();
       }
     });
 
@@ -219,36 +216,39 @@ ipcMain.handle('resume-session', () => {
   return true;
 });
 
-ipcMain.on('close-interrupt', (event, appName) => {
+ipcMain.on('dismiss-overlay', (event, appName, pids) => {
   if (interruptWindow) {
     interruptWindow.hide();
   }
   if (appName) {
-    blocker.temporarilyAllow(appName);
+    blocker.dismissApp(appName, pids);
   }
 });
 
-const { exec } = require('child_process');
-ipcMain.on('close-interrupt-and-app', (event, appName) => {
+ipcMain.on('close-app', (event, appName) => {
   if (interruptWindow) {
     interruptWindow.hide();
   }
   
-  pauseBlockerUntil = Date.now() + 3500; // Pause for 3.5s to let the app close smoothly
-
   if (appName) {
-    if (appName.toLowerCase().endsWith('.exe')) {
-      exec(`taskkill /IM ${appName} /F`, (err) => {
-        if (err) console.error('Failed to kill app', err);
-      });
-    } else {
-      // It's a website. Send Ctrl+W to the active browser window.
-      // Small timeout to ensure the overlay is fully hidden and the browser is focused again.
-      setTimeout(() => {
-        exec('powershell -c "$wshell = New-Object -ComObject wscript.shell; $wshell.SendKeys(\'^w\')"');
-      }, 150);
-    }
+    blocker.setOverlayShown(appName, false);
+    const searchName = appName.toLowerCase().endsWith('.exe') ? appName : (appName + '.exe');
+    exec(`taskkill /F /IM ${searchName}`, (err) => {
+      if (err) console.error('Failed to kill app', err);
+    });
   }
+});
+
+ipcMain.handle('is-extension-installed', () => {
+  return blocker.isExtensionInstalled();
+});
+
+ipcMain.handle('install-extension', async () => {
+  return await blocker.installExtension();
+});
+
+ipcMain.handle('uninstall-extension', async () => {
+  return await blocker.uninstallExtension();
 });
 
 function stopSession() {

@@ -107,25 +107,25 @@
   <p class="quote" style="color: #a0a0a0;">Every moment you waste on distractions is a moment stolen from your future success.</p>
   
   <div class="buttons-container">
-    <button class="btn" id="btn-close">Work for it</button>
-    <button class="btn btn-secondary" id="btn-continue">I give up</button>
+    <button class="btn" id="btn-close">Close App</button>
+    <button class="btn btn-secondary" id="btn-continue">Dismiss</button>
   </div>
 
   <script>
     const { ipcRenderer } = require('electron');
+    let currentPids = [];
     
     document.getElementById('btn-continue').addEventListener('click', () => {
-      ipcRenderer.send('close-interrupt', document.getElementById('app-name').innerText || '');
+      ipcRenderer.send('dismiss-overlay', document.getElementById('app-name').innerText || '', currentPids);
     });
 
     document.getElementById('btn-close').addEventListener('click', () => {
-      // Attempt to close the app/site if needed, or simply hide the overlay
-      // Given we just want to help them back out, we let them close it smoothly.
-      ipcRenderer.send('close-interrupt-and-app', document.getElementById('app-name').innerText || '');
+      ipcRenderer.send('close-app', document.getElementById('app-name').innerText || '');
     });
 
-    ipcRenderer.on('set-blocked-app', (event, appName) => {
+    ipcRenderer.on('set-blocked-app', (event, appName, pids) => {
       document.getElementById('app-name').innerText = appName;
+      currentPids = pids || [];
     });
   </script>
 </body>

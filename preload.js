@@ -9,5 +9,9 @@ contextBridge.exposeInMainWorld('focusAPI', {
   resumeSession: () => ipcRenderer.invoke('resume-session'),
   
   onSessionTick: (callback) => ipcRenderer.on('session-tick', (_event, state) => callback(state)),
-  onSessionEnded: (callback) => ipcRenderer.on('session-ended', () => callback())
+  onSessionEnded: (callback) => ipcRenderer.on('session-ended', () => callback()),
+  
+  isExtensionInstalled: () => ipcRenderer.invoke('is-extension-installed'),
+  installExtension: () => ipcRenderer.invoke('install-extension'),
+  uninstallExtension: () => ipcRenderer.invoke('uninstall-extension')
 });

@@ -30,6 +30,8 @@
     "electron-builder": "^26.8.1"
   },
   "dependencies": {
-    "jsdom": "^29.0.1"
+    "http-mitm-proxy": "^1.1.0",
+    "jsdom": "^29.0.1",
+    "ps-list": "^6.3.0"
   }
 }

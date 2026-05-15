@@ -324,6 +324,40 @@ function setupActions() {
     activeSessionBg.style.display = 'none';
     activeSessionBgOverlay.style.display = 'none';
   });
+  
+  // Extension Toggle Logic
+  const btnToggleExtension = document.getElementById('btn-toggle-extension');
+  if (btnToggleExtension) {
+    const updateExtensionButton = async () => {
+      const isInstalled = await window.focusAPI.isExtensionInstalled();
+      if (isInstalled) {
+        btnToggleExtension.innerText = 'Delete Extension';
+        btnToggleExtension.classList.add('btn-delete');
+        btnToggleExtension.style.width = '100%';
+        btnToggleExtension.style.marginTop = '5px';
+      } else {
+        btnToggleExtension.innerText = 'Install Extension';
+        btnToggleExtension.classList.remove('btn-delete');
+        btnToggleExtension.classList.add('secondary-btn');
+      }
+    };
+
+    updateExtensionButton();
+
+    btnToggleExtension.addEventListener('click', async () => {
+      const isInstalled = await window.focusAPI.isExtensionInstalled();
+      if (isInstalled) {
+        if (confirm('Are you sure you want to delete the extension from your AppData? This will stop website blocking.')) {
+          await window.focusAPI.uninstallExtension();
+          await updateExtensionButton();
+        }
+      } else {
+        await window.focusAPI.installExtension();
+        // We don't await because it opens folder/browser, but we update UI
+        setTimeout(updateExtensionButton, 1000); 
+      }
+    });
+  }
 
   // Active session card click -> detail view
   document.querySelector('.active-session-card').addEventListener('click', (e) => {

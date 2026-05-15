@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "Opal Website Blocker",
+  "version": "1.0",
+  "description": "Works with Opal app to keep you focused.",
+  "icons": {
+    "128": "icons/icon.png"
+  },
+  "permissions": [],
+  "host_permissions": [
+    "http://127.0.0.1/*",
+    "*://*/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "overlay.html",
+        "overlay.js",
+        "icons/icon.png"
+      ],
+      "matches": [
+        "*://*/*"
+      ]
+    }
+  ]
+}
